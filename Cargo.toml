@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+    "render",
+    "example_impl"
+]
