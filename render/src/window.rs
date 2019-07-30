@@ -1,6 +1,6 @@
 use wgpu::winit::{
     ElementState,
-    Event,
+    Event as WinitEvent,
     EventsLoop,
     KeyboardInput,
     VirtualKeyCode,
@@ -9,6 +9,8 @@ use wgpu::winit::{
 use wgpu::winit::Window as WinitWindow;
 
 use wgpu::{Surface, Instance};
+
+pub use wgpu::winit::VirtualKeyCode as KeyCode;
 
 pub struct Window {
     events_loop: EventsLoop,
@@ -39,8 +41,42 @@ impl Window {
         }
     }
 
-    pub fn poll_events<F>(&mut self, callback: F) where F: FnMut(Event) {
-        self.events_loop.poll_events(callback);
+    pub fn poll_events<F>(&mut self, mut callback: F) where F: FnMut(Event) {
+        self.events_loop.poll_events(|event| {
+            callback(Event::from(event))
+        });
 
     }
+}
+
+#[derive(Debug)]
+pub enum Event {
+    KeyPressed(KeyCode),
+    KeyReleased(KeyCode),
+    Close,
+    Unknown
+}
+
+impl From<WinitEvent> for Event {
+    fn from(item: WinitEvent) -> Event {
+        match item {
+            WinitEvent::WindowEvent {event, ..} => match event {
+                WindowEvent::KeyboardInput {
+                    input: KeyboardInput {
+                        virtual_keycode: Some(code),
+                        state,
+                        ..
+                    },
+                    ..
+                } => match state {
+                    ElementState::Pressed => Event::KeyPressed(code),
+                    ElementState::Released => Event::KeyReleased(code)
+                },
+                WindowEvent::CloseRequested => Event::Close,
+                _ => Event::Unknown
+            },
+            _ => Event::Unknown
+        }
+    }
+
 }
