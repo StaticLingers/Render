@@ -15,5 +15,7 @@ fn main() {
                 _ => {}
             
         });
+
+        window.draw();
     }
 }
